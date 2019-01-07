@@ -23,10 +23,15 @@ find_divisions <- function(file, div_names) {
   return(divs)
 }
 
-get_categories <- function(file, div)
+read_categories <- function(file, div)
 {
   categories <- read.delim(file, stringsAsFactors=F, skip=div$skip[1], nrows=div$nrows[1])
-  
+
+  return(categories)
+}
+
+clean_categories <- function(categories)
+{
   # tidy the data:
   # - "Weighted" looks like "80% Weight" - use it to compute "weight"
   categories$weight <- parse_number(categories$Weighted) / 100.0
@@ -41,9 +46,15 @@ get_categories <- function(file, div)
   return(categories)
 }
 
-get_assignments <- function(file, div)
+read_assignments <- function(file, div)
 {
   assignments <- read.delim(file, stringsAsFactors=F, skip=div$skip[1], nrows=div$nrows[1])
+
+  return(assignments)
+}
+
+clean_assignments <- function(assignments)
+{
   # tidy the data:
   # "Category" has the weight embedded in it. Separate them into Category (matching categories$Category), weight
   cats <- gsub("\\(", "", assignments$Category)
@@ -78,8 +89,10 @@ file <- "data.csv"
 div_names <- c("Category Breakdown", "Assignments")
 divs <- find_divisions(file, div_names)
 
-categories <- get_categories(file, divs[1,])
-assignments <- get_assignments(file, divs[2,])
+categories <- read_categories(file, divs[1,])
+categories <- clean_categories(categories)
+assignments <- read_assignments(file, divs[2,])
+assignments <- clean_assignments(assignments)
 
 g_assignments <- group_by(assignments, Category)
 summary <- summarize(g_assignments, actual = sum(points.actual), possible = sum(points.possible), weight=min(weight))
