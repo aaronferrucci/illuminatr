@@ -76,11 +76,14 @@ clean_assignments <- function(assignments)
   assignments[quizzes, c("points.actual", "points.possible")] = 0.7 * assignments[quizzes, c("points.actual", "points.possible")]
   
   # Find a minimum test score (Q: by percentage or points?)
-  assignments$ratio <- assignments$points.actual / assignments$points.possible
+  ratio <- assignments$points.actual / assignments$points.possible
   # Drop _a_ minimum test score
-  min_test_indices <- match(min(assignments$ratio), assignments$ratio)
+  min_test_indices <- match(min(ratio), ratio)
   min_test_index <- min_test_indices[1]
   assignments <- assignments[-min_test_index,]
+  
+  # Drop unused columns
+  assignments <- subset(assignments, select=-c(Gradebook, Pts.Possible, Grade, Other.Marks, Due.Date, Notes))
   
   return(assignments)
 }
@@ -93,6 +96,10 @@ categories <- read_categories(file, divs[1,])
 categories <- clean_categories(categories)
 assignments <- read_assignments(file, divs[2,])
 assignments <- clean_assignments(assignments)
+
+# To add a hypothetical assignment: include Category, Assignment.Name, points.actual, points.possible, weight
+final <- data.frame(Category="Tests", Assignment.Name="final", weight=0.8, points.actual=87, points.possible=100)
+assignments <- rbind(assignments, final)
 
 g_assignments <- group_by(assignments, Category)
 summary <- summarize(g_assignments, actual = sum(points.actual), possible = sum(points.possible), weight=min(weight))
